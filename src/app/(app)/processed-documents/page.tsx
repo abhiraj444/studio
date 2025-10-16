@@ -30,7 +30,8 @@ export default function ProcessedDocumentsPage() {
                       <Image
                         src={doc.imageDataUri}
                         alt={doc.name}
-                        layout="fill"
+                        width={400}
+                        height={225}
                         objectFit="cover"
                         className="transition-transform group-hover:scale-105"
                       />

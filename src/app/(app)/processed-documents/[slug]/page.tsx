@@ -37,23 +37,26 @@ export default function DocumentSummaryPage() {
         const img = new window.Image();
         img.src = document.imageDataUri;
         await new Promise(resolve => (img.onload = resolve));
-
-        const imgProps = pdf.getImageProperties(img);
+  
+        const imgProps = pdf.getImageProperties(img.src);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
+  
         let finalPdfHeight = pdfHeight;
         let finalPdfWidth = pdfWidth;
-
+  
         if (pdfHeight > pdf.internal.pageSize.getHeight()) {
           finalPdfHeight = pdf.internal.pageSize.getHeight();
           finalPdfWidth = (imgProps.width * finalPdfHeight) / imgProps.height;
         }
-
+  
         const x = (pdf.internal.pageSize.getWidth() - finalPdfWidth) / 2;
         const y = (pdf.internal.pageSize.getHeight() - finalPdfHeight) / 2;
+  
+        // Extract image type from data URI, default to JPEG
+        const imageType = document.imageDataUri.match(/data:image\/(.*?);/)?.[1]?.toUpperCase() || 'JPEG';
 
-        pdf.addImage(document.imageDataUri, 'JPEG', x, y, finalPdfWidth, finalPdfHeight);
+        pdf.addImage(document.imageDataUri, imageType, x, y, finalPdfWidth, finalPdfHeight);
         pdf.save(`${document.name}.pdf`);
       } else {
          const processedBlob = await processImage({
