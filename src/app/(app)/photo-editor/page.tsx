@@ -12,6 +12,7 @@ import { generateProfessionalPhoto } from '@/ai/flows/generate-professional-phot
 import { fileToDataUri } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 export default function PhotoEditorPage() {
   const { toast } = useToast();
