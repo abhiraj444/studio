@@ -39,6 +39,27 @@ export async function generateProfessionalPhoto(
   return generateProfessionalPhotoFlow(input);
 }
 
+
+const generateProfessionalPhotoPrompt = ai.definePrompt(
+  {
+      name: "generateProfessionalPhotoPrompt",
+      input: { schema: GenerateProfessionalPhotoInputSchema },
+      output: { schema: GenerateProfessionalPhotoOutputSchema },
+      prompt: [
+          {
+              media: { url: '{{photoDataUri}}' },
+          },
+          {
+              text: `Generate a professional headshot with a plain white background without altering the facial features. The image must be suitable for a government exam application.`,
+          },
+      ],
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      }
+  }
+);
+
+
 const generateProfessionalPhotoFlow = ai.defineFlow(
   {
     name: 'generateProfessionalPhotoFlow',
@@ -47,17 +68,7 @@ const generateProfessionalPhotoFlow = ai.defineFlow(
   },
   async input => {
     const {media} = await ai.generate({
-      prompt: [
-        {
-          media: {
-            url: input.photoDataUri,
-            contentType: input.photoDataUri.match(/data:(.*);base64,/)![1],
-          },
-        },
-        {
-          text: `Generate a professional headshot with a plain white background without altering the facial features. The image must be suitable for a government exam application.`,
-        },
-      ],
+      prompt: await generateProfessionalPhotoPrompt(input),
       model: 'googleai/gemini-2.5-flash-image-preview',
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
