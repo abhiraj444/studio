@@ -35,25 +35,32 @@ export default function DocumentSummaryPage() {
     try {
       if (downloadFormat === 'pdf') {
         const pdf = new jsPDF();
-        const img = new window.Image();
         
-        const imgLoadPromise = new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = document.imageDataUri!;
+        // Convert the base64 image to a Blob with the specified quality and size constraints
+        const imageBlob = await processImage({
+            imageUrl: document.imageDataUri,
+            quality: imageQuality / 100,
+            maxSizeKb: maxSizeKb,
+            format: 'jpeg',
         });
         
-        await imgLoadPromise;
-        
-        // Always convert to JPEG for jsPDF for consistency
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx!.drawImage(img, 0, 0);
-        const jpegDataUri = canvas.toDataURL('image/jpeg', 1.0);
+        // Convert the processed Blob to a data URI to be used in jsPDF
+        const jpegDataUri = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target?.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageBlob);
+        });
 
-        const imgProps = pdf.getImageProperties(jpegDataUri);
+        const img = new window.Image();
+        const imgLoadPromise = new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = jpegDataUri;
+        });
+        await imgLoadPromise;
+
+        const imgProps = { width: img.width, height: img.height };
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
@@ -63,11 +70,11 @@ export default function DocumentSummaryPage() {
         let finalPdfWidth, finalPdfHeight;
 
         if (imgAspectRatio > pdfAspectRatio) {
-            finalPdfWidth = pdfWidth;
-            finalPdfHeight = pdfWidth / imgAspectRatio;
+            finalPdfWidth = pdfWidth - 20; // with margin
+            finalPdfHeight = finalPdfWidth / imgAspectRatio;
         } else {
-            finalPdfHeight = pdfHeight;
-            finalPdfWidth = pdfHeight * imgAspectRatio;
+            finalPdfHeight = pdfHeight - 20; // with margin
+            finalPdfWidth = finalPdfHeight * imgAspectRatio;
         }
 
         const x = (pdfWidth - finalPdfWidth) / 2;
@@ -75,6 +82,10 @@ export default function DocumentSummaryPage() {
 
         pdf.addImage(jpegDataUri, 'JPEG', x, y, finalPdfWidth, finalPdfHeight);
         pdf.save(`${document.name}.pdf`);
+        toast({
+            title: 'Download Started',
+            description: `PDF size: ~${(imageBlob.size / 1024).toFixed(2)} KB`,
+        });
 
       } else {
          const processedBlob = await processImage({
@@ -147,7 +158,7 @@ export default function DocumentSummaryPage() {
             <CardHeader>
                 <CardTitle>Download Options</CardTitle>
                 <CardDescription>Adjust and download your document.</CardDescription>
-            </CardHeader>
+            </Header>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label>Format</Label>
@@ -162,18 +173,14 @@ export default function DocumentSummaryPage() {
                     </Select>
                 </div>
 
-                {downloadFormat === 'jpeg' && (
-                <>
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label>Max File Size (KB)</Label>
                     <Input type="number" placeholder="e.g., 100" value={maxSizeKb || ''} onChange={e => setMaxSizeKb(e.target.value ? parseInt(e.target.value) : undefined)}/>
-                  </div>
-                  <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                     <Label>Quality: {imageQuality}%</Label>
                     <Slider value={[imageQuality]} onValueChange={([val]) => setImageQuality(val)} max={100} step={5} />
-                  </div>
-                </>
-                )}
+                </div>
                 
                 <Button onClick={handleDownload} disabled={isDownloading || !document.imageDataUri} className="w-full">
                     <Download className="mr-2 h-4 w-4" />
