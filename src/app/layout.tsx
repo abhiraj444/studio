@@ -18,6 +18,7 @@ const fontHeadline = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Document Digitizer Pro',
   description: 'Automate your government exam form filling process.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

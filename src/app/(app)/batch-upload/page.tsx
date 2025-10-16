@@ -11,6 +11,7 @@ import { fileToDataUri } from '@/lib/utils';
 import { extractDocumentDetails } from '@/ai/flows/extract-document-details';
 import { Progress } from '@/components/ui/progress';
 import type { Document, ExtractedField } from '@/lib/definitions';
+import { Label } from '@/components/ui/label';
 
 type FileStatus = 'pending' | 'processing' | 'success' | 'error';
 
@@ -108,18 +109,21 @@ export default function BatchUploadPage() {
         <CardDescription>Upload multiple documents at once for automated detail extraction.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex flex-col gap-2 sm:flex-row">
-            <Input type="file" onChange={handleFileChange} multiple accept="image/*,application/pdf" disabled={isProcessing} />
+        <div className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="batch-upload-input">Select Files</Label>
+              <Input id="batch-upload-input" type="file" onChange={handleFileChange} multiple accept="image/*,application/pdf" disabled={isProcessing} />
+            </div>
             <Button onClick={handleProcessAll} disabled={files.length === 0 || isProcessing} className="w-full sm:w-auto">
                 <FileUp className="mr-2 h-4 w-4" />
-                {isProcessing ? 'Processing...' : 'Process All'}
+                {isProcessing ? 'Processing...' : `Process ${files.length} File(s)`}
             </Button>
         </div>
 
         {isProcessing && (
           <div className="space-y-2">
             <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-center">Processing file {Math.floor(progress / 100 * files.length)} of {files.length}...</p>
+            <p className="text-sm text-muted-foreground text-center">Processing file {Math.min(Math.floor(progress / 100 * files.length) + 1, files.length)} of {files.length}...</p>
           </div>
         )}
 
