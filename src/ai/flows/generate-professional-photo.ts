@@ -44,18 +44,14 @@ const generateProfessionalPhotoPrompt = ai.definePrompt(
   {
       name: "generateProfessionalPhotoPrompt",
       input: { schema: GenerateProfessionalPhotoInputSchema },
-      output: { schema: GenerateProfessionalPhotoOutputSchema },
       prompt: [
           {
-              media: { url: '{{photoDataUri}}' },
+              media: { url: '{{photoDataUri}}', contentType: 'image/jpeg' },
           },
           {
               text: `Generate a professional headshot with a plain white background without altering the facial features. The image must be suitable for a government exam application.`,
           },
       ],
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      }
   }
 );
 

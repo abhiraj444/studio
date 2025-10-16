@@ -40,8 +40,14 @@ export async function enhanceSignature(
 const enhanceSignaturePrompt = ai.definePrompt({
   name: 'enhanceSignaturePrompt',
   input: {schema: EnhanceSignatureInputSchema},
-  output: {schema: EnhanceSignatureOutputSchema},
-  prompt: `Generate a professional-looking digital signature from the given signature image. The signature should be in blank ink on a white paper background, making it look clean and official. Here is the signature: {{media url=signatureDataUri}}`,
+  prompt: [
+      {
+        media: { url: '{{signatureDataUri}}', contentType: 'image/jpeg' },
+      },
+      {
+        text: `Generate a professional-looking digital signature from the given signature image. The signature should be in blank ink on a white paper background, making it look clean and official.`
+      }
+  ],
 });
 
 const enhanceSignatureFlow = ai.defineFlow(
