@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "dashboard-documents",
+      "description": "Illustration for managing documents",
+      "imageUrl": "https://picsum.photos/seed/1/600/400",
+      "imageHint": "documents file"
+    },
+    {
+      "id": "dashboard-photo",
+      "description": "Illustration for photo editing",
+      "imageUrl": "https://picsum.photos/seed/2/600/400",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "dashboard-signature",
+      "description": "Illustration for signature enhancement",
+      "imageUrl": "https://picsum.photos/seed/3/600/400",
+      "imageHint": "signature pen"
+    },
+    {
+      "id": "dashboard-batch",
+      "description": "Illustration for batch processing",
+      "imageUrl": "https://picsum.photos/seed/4/600/400",
+      "imageHint": "files stacked"
+    }
+  ]
 }
