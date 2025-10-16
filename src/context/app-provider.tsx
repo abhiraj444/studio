@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { AppState, AppContextType, Document, Photo, Signature } from '@/lib/definitions';
+import { useRouter } from 'next/navigation';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -24,6 +25,7 @@ const STORAGE_KEY = 'document-digitizer-pro-state';
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(initialState);
   const [isInitialized, setIsInitialized] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -33,13 +35,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Merge with initial state to ensure all default documents are present
         const mergedDocs = initialState.documents.map(initDoc => {
           const storedDoc = parsedState.documents.find(d => d.id === initDoc.id);
-          return storedDoc ? storedDoc : initDoc;
+          return storedDoc ? { ...initDoc, ...storedDoc } : initDoc;
         });
-        // Add custom docs from storage
-        const customDocs = parsedState.documents.filter(d => d.isCustom);
+        // Get all unique custom documents from storage
+        const storedCustomDocs = parsedState.documents.filter(d => d.isCustom && !initialState.documents.some(id => id.id === d.id));
+        
         setState({
-            ...parsedState,
-            documents: [...mergedDocs, ...customDocs],
+            ...initialState, // Start with a clean slate of photos and signatures from initial
+            ...parsedState, // Then layer on stored photos and signatures
+            documents: [...mergedDocs, ...storedCustomDocs],
         });
       } else {
         setState(initialState);
@@ -105,10 +109,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }
 
+  const resetState = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      setState(initialState);
+      // Redirect to dashboard to ensure a clean state visually
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Failed to reset state:', error);
+    }
+  };
+
 
   return (
     <AppContext.Provider
-      value={{ state, addDocument, updateDocument, addPhoto, updatePhoto, addSignature, updateSignature, isInitialized }}
+      value={{ state, addDocument, updateDocument, addPhoto, updatePhoto, addSignature, updateSignature, resetState, isInitialized }}
     >
       {children}
     </AppContext.Provider>

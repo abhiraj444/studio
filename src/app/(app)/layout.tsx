@@ -23,13 +23,16 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarGroup,
-  SidebarGroupLabel
+  SidebarGroupLabel,
+  SidebarFooter,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons/logo';
 import { useAppState } from '@/context/app-provider';
 import { AddDocumentDialog } from '@/components/add-document-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ResetAppDialog } from '@/components/reset-app-dialog';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -159,6 +162,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarGroup>
           </ScrollArea>
+           <SidebarSeparator />
+           <SidebarFooter>
+              <ResetAppDialog />
+          </SidebarFooter>
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="flex flex-col">

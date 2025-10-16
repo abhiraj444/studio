@@ -43,5 +43,6 @@ export type AppContextType = {
   updatePhoto: (id: string, updates: Partial<Photo>) => void;
   addSignature: (signature: Signature) => void;
   updateSignature: (id: string, updates: Partial<Signature>) => void;
+  resetState: () => void;
   isInitialized: boolean;
 };
