@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImagePreviewDialog } from '@/components/image-preview-dialog';
-import { AlertCircle, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { AlertCircle, Download, FileText } from 'lucide-react';
 import { processImage } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 
@@ -36,7 +36,6 @@ export default function DocumentSummaryPage() {
       if (downloadFormat === 'pdf') {
         const pdf = new jsPDF();
         
-        // Convert the base64 image to a Blob with the specified quality and size constraints
         const imageBlob = await processImage({
             imageUrl: document.imageDataUri,
             quality: imageQuality / 100,
@@ -44,7 +43,6 @@ export default function DocumentSummaryPage() {
             format: 'jpeg',
         });
         
-        // Convert the processed Blob to a data URI to be used in jsPDF
         const jpegDataUri = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = e => resolve(e.target?.result as string);
@@ -53,12 +51,8 @@ export default function DocumentSummaryPage() {
         });
 
         const img = new window.Image();
-        const imgLoadPromise = new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = jpegDataUri;
-        });
-        await imgLoadPromise;
+        img.src = jpegDataUri;
+        await new Promise((resolve) => { img.onload = resolve; });
 
         const imgProps = { width: img.width, height: img.height };
         const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -158,7 +152,7 @@ export default function DocumentSummaryPage() {
             <CardHeader>
                 <CardTitle>Download Options</CardTitle>
                 <CardDescription>Adjust and download your document.</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label>Format</Label>
