@@ -15,7 +15,7 @@ const GenerateProfessionalPhotoInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      'A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
+      "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type GenerateProfessionalPhotoInput = z.infer<
@@ -26,7 +26,7 @@ const GenerateProfessionalPhotoOutputSchema = z.object({
   professionalPhotoDataUri: z
     .string()
     .describe(
-      'A professional-looking photo with a white background, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
+      "A professional-looking photo with a white background, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type GenerateProfessionalPhotoOutput = z.infer<
@@ -39,24 +39,6 @@ export async function generateProfessionalPhoto(
   return generateProfessionalPhotoFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateProfessionalPhotoPrompt',
-  input: {schema: GenerateProfessionalPhotoInputSchema},
-  output: {schema: GenerateProfessionalPhotoOutputSchema},
-  prompt: [
-    {
-      media: {url: '{{{photoDataUri}}}'},
-    },
-    {
-      text: `Generate a professional headshot with a plain white background without altering the facial features. The image must be suitable for a government exam application.`,
-    },
-  ],
-  model: 'googleai/gemini-2.5-flash-image-preview',
-  config: {
-    responseModalities: ['TEXT', 'IMAGE'],
-  },
-});
-
 const generateProfessionalPhotoFlow = ai.defineFlow(
   {
     name: 'generateProfessionalPhotoFlow',
@@ -64,7 +46,23 @@ const generateProfessionalPhotoFlow = ai.defineFlow(
     outputSchema: GenerateProfessionalPhotoOutputSchema,
   },
   async input => {
-    const {media} = await prompt(input);
+    const {media} = await ai.generate({
+      prompt: [
+        {
+          media: {
+            url: input.photoDataUri,
+            contentType: input.photoDataUri.match(/data:(.*);base64,/)![1],
+          },
+        },
+        {
+          text: `Generate a professional headshot with a plain white background without altering the facial features. The image must be suitable for a government exam application.`,
+        },
+      ],
+      model: 'googleai/gemini-2.5-flash-image-preview',
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
     return {professionalPhotoDataUri: media!.url!};
   }
 );
