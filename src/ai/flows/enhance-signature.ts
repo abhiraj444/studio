@@ -29,26 +29,15 @@ const EnhanceSignatureOutputSchema = z.object({
     .string()
     .describe('The AI-enhanced signature image as a data URI.'),
 });
-export type EnhanceSignatureOutput = z.infer<typeof EnhanceSignatureOutputSchema>;
+export type EnhanceSignatureOutput = z.infer<
+  typeof EnhanceSignatureOutputSchema
+>;
 
 export async function enhanceSignature(
   input: EnhanceSignatureInput
 ): Promise<EnhanceSignatureOutput> {
   return enhanceSignatureFlow(input);
 }
-
-const enhanceSignaturePrompt = ai.definePrompt({
-  name: 'enhanceSignaturePrompt',
-  input: {schema: EnhanceSignatureInputSchema},
-  prompt: [
-      {
-        media: { url: '{{signatureDataUri}}', contentType: 'image/jpeg' },
-      },
-      {
-        text: `Generate a professional-looking digital signature from the given signature image. The signature should be in blank ink on a white paper background, making it look clean and official.`
-      }
-  ],
-});
 
 const enhanceSignatureFlow = ai.defineFlow(
   {
@@ -58,7 +47,14 @@ const enhanceSignatureFlow = ai.defineFlow(
   },
   async input => {
     const {media} = await ai.generate({
-      prompt: await enhanceSignaturePrompt(input),
+      prompt: [
+        {
+          media: {url: input.signatureDataUri, contentType: 'image/jpeg'},
+        },
+        {
+          text: `Generate a professional-looking digital signature from the given signature image. The signature should be in blank ink on a white paper background, making it look clean and official.`,
+        },
+      ],
       model: 'googleai/gemini-2.5-flash-image-preview',
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
