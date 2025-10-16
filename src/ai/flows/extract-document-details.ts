@@ -29,7 +29,7 @@ const ExtractDocumentDetailsInputSchema = z.object({
 export type ExtractDocumentDetailsInput = z.infer<typeof ExtractDocumentDetailsInputSchema>;
 
 const ExtractDocumentDetailsOutputSchema = z.object({
-  extractedDetails: z.record(z.string().or(z.number()).or(z.boolean()).or(z.null())),
+  extractedDetails: z.record(z.any()),
 });
 export type ExtractDocumentDetailsOutput = z.infer<typeof ExtractDocumentDetailsOutputSchema>;
 

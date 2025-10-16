@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { UploadCloud, FileJson, Download, Share2, AlertCircle } from 'lucide-react';
 import type { ExtractedField } from '@/lib/definitions';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function DocumentPage() {
   const { slug } = useParams();
@@ -51,7 +52,7 @@ export default function DocumentPage() {
         result.extractedDetails
       ).map(([key, value]) => ({
         key,
-        value: String(value),
+        value: value,
       }));
 
       updateDocument(document.id, { fields: newFields });
@@ -71,7 +72,7 @@ export default function DocumentPage() {
     }
   };
 
-  const handleFieldChange = (key: string, value: string) => {
+  const handleFieldChange = (key: string, value: any) => {
     if (!document) return;
     const updatedFields = document.fields.map((field) =>
       field.key === key ? { ...field, value } : field
@@ -145,11 +146,26 @@ export default function DocumentPage() {
             {document.fields.map(({ key, value }) => (
               <div key={key} className="grid gap-2">
                 <Label htmlFor={key} className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                <Input
-                  id={key}
-                  value={value}
-                  onChange={(e) => handleFieldChange(key, e.target.value)}
-                />
+                {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? (
+                  <Input
+                    id={key}
+                    value={String(value)}
+                    onChange={(e) => handleFieldChange(key, e.target.value)}
+                  />
+                ) : (
+                  <Textarea
+                    id={key}
+                    value={JSON.stringify(value, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        handleFieldChange(key, JSON.parse(e.target.value));
+                      } catch (error) {
+                        // Handle JSON parsing error if needed, maybe with a toast
+                      }
+                    }}
+                    rows={5}
+                  />
+                )}
               </div>
             ))}
             </div>

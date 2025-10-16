@@ -1,6 +1,6 @@
 export type ExtractedField = {
   key: string;
-  value: string;
+  value: any;
 };
 
 export type Document = {
