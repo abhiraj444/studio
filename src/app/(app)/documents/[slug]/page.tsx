@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fileToDataUri } from '@/lib/utils';
+import { fileToDataUri, cn } from '@/lib/utils';
 import { extractDocumentDetails } from '@/ai/flows/extract-document-details';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
