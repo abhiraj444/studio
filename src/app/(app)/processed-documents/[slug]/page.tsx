@@ -31,33 +31,51 @@ export default function DocumentSummaryPage() {
   const handleDownload = async () => {
     if (!document?.imageDataUri) return;
     setIsDownloading(true);
+
     try {
       if (downloadFormat === 'pdf') {
         const pdf = new jsPDF();
         const img = new window.Image();
-        img.src = document.imageDataUri;
-        await new Promise(resolve => (img.onload = resolve));
-  
-        const imgProps = pdf.getImageProperties(img.src);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-  
-        let finalPdfHeight = pdfHeight;
-        let finalPdfWidth = pdfWidth;
-  
-        if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-          finalPdfHeight = pdf.internal.pageSize.getHeight();
-          finalPdfWidth = (imgProps.width * finalPdfHeight) / imgProps.height;
-        }
-  
-        const x = (pdf.internal.pageSize.getWidth() - finalPdfWidth) / 2;
-        const y = (pdf.internal.pageSize.getHeight() - finalPdfHeight) / 2;
-  
-        // Extract image type from data URI, default to JPEG
-        const imageType = document.imageDataUri.match(/data:image\/(.*?);/)?.[1]?.toUpperCase() || 'JPEG';
+        
+        const imgLoadPromise = new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = document.imageDataUri!;
+        });
+        
+        await imgLoadPromise;
+        
+        // Always convert to JPEG for jsPDF for consistency
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx!.drawImage(img, 0, 0);
+        const jpegDataUri = canvas.toDataURL('image/jpeg', 1.0);
 
-        pdf.addImage(document.imageDataUri, imageType, x, y, finalPdfWidth, finalPdfHeight);
+        const imgProps = pdf.getImageProperties(jpegDataUri);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const imgAspectRatio = imgProps.width / imgProps.height;
+        const pdfAspectRatio = pdfWidth / pdfHeight;
+
+        let finalPdfWidth, finalPdfHeight;
+
+        if (imgAspectRatio > pdfAspectRatio) {
+            finalPdfWidth = pdfWidth;
+            finalPdfHeight = pdfWidth / imgAspectRatio;
+        } else {
+            finalPdfHeight = pdfHeight;
+            finalPdfWidth = pdfHeight * imgAspectRatio;
+        }
+
+        const x = (pdfWidth - finalPdfWidth) / 2;
+        const y = (pdfHeight - finalPdfHeight) / 2;
+
+        pdf.addImage(jpegDataUri, 'JPEG', x, y, finalPdfWidth, finalPdfHeight);
         pdf.save(`${document.name}.pdf`);
+
       } else {
          const processedBlob = await processImage({
             imageUrl: document.imageDataUri,
@@ -84,7 +102,7 @@ export default function DocumentSummaryPage() {
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: 'There was an error preparing your file.',
+        description: error instanceof Error ? error.message : 'There was an error preparing your file.',
       });
     } finally {
         setIsDownloading(false);
