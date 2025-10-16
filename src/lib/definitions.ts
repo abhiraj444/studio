@@ -1,6 +1,7 @@
 export type ExtractedField = {
   key: string;
   value: any;
+  isImportant?: boolean;
 };
 
 export type Document = {
@@ -9,6 +10,7 @@ export type Document = {
   fields: ExtractedField[];
   imageDataUri?: string;
   isCustom: boolean;
+  hasBeenProcessed?: boolean;
 };
 
 export type Photo = {

@@ -7,6 +7,7 @@ import {
   Package,
   PlusCircle,
   FileUp,
+  Archive,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -62,6 +63,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Link href="/dashboard">
                     <LayoutDashboard />
                     Dashboard
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/processed-documents'}
+                >
+                  <Link href="/processed-documents">
+                    <Archive />
+                    Processed Documents
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

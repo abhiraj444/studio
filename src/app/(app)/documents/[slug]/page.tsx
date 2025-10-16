@@ -12,9 +12,11 @@ import { fileToDataUri } from '@/lib/utils';
 import { extractDocumentDetails } from '@/ai/flows/extract-document-details';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { UploadCloud, FileJson, Download, Share2, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileJson, Download, Share2, AlertCircle, Star } from 'lucide-react';
 import type { ExtractedField } from '@/lib/definitions';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
 export default function DocumentPage() {
   const { slug } = useParams();
@@ -23,6 +25,8 @@ export default function DocumentPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
 
   const document = useMemo(
     () => state.documents.find((doc) => doc.id === slug),
@@ -30,8 +34,10 @@ export default function DocumentPage() {
   );
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      setPreviewImage(URL.createObjectURL(selectedFile));
     }
   };
 
@@ -52,10 +58,11 @@ export default function DocumentPage() {
         result.extractedDetails
       ).map(([key, value]) => ({
         key,
-        value: value,
+        value,
+        isImportant: false,
       }));
 
-      updateDocument(document.id, { fields: newFields });
+      updateDocument(document.id, { fields: newFields, hasBeenProcessed: true });
       toast({
         title: 'Extraction Complete',
         description: `Successfully extracted ${newFields.length} fields from ${document.name}.`,
@@ -80,6 +87,14 @@ export default function DocumentPage() {
     updateDocument(document.id, { fields: updatedFields });
   };
   
+  const handleToggleImportant = (key: string, isImportant: boolean) => {
+    if (!document) return;
+    const updatedFields = document.fields.map(field =>
+      field.key === key ? { ...field, isImportant } : field
+    );
+    updateDocument(document.id, { fields: updatedFields });
+  };
+
   if (!isInitialized) {
     return (
       <div className="grid gap-8 md:grid-cols-2">
@@ -102,7 +117,7 @@ export default function DocumentPage() {
     );
   }
 
-  const renderedImage = file ? URL.createObjectURL(file) : document.imageDataUri;
+  const renderedImage = previewImage || document.imageDataUri;
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -112,9 +127,11 @@ export default function DocumentPage() {
           <CardDescription>Upload your document image here to start extraction.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative aspect-video w-full rounded-lg border-2 border-dashed bg-muted/50">
+           <div className="relative aspect-video w-full rounded-lg border-2 border-dashed bg-muted/50">
             {renderedImage ? (
-              <Image src={renderedImage} alt={document.name} layout="fill" objectFit="contain" className="rounded-lg"/>
+                <ImagePreviewDialog imageUrl={renderedImage}>
+                  <Image src={renderedImage} alt={document.name} layout="fill" objectFit="contain" className="cursor-pointer rounded-lg"/>
+                </ImagePreviewDialog>
             ) : (
               <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
                 <UploadCloud className="mb-2 h-10 w-10" />
@@ -134,7 +151,7 @@ export default function DocumentPage() {
       <Card>
         <CardHeader>
           <CardTitle>Extracted Details</CardTitle>
-          <CardDescription>View and edit the details extracted from your document.</CardDescription>
+          <CardDescription>View, edit, and mark important details from your document.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
@@ -143,9 +160,14 @@ export default function DocumentPage() {
             </div>
           ) : document.fields.length > 0 ? (
             <div className="max-h-[400px] space-y-4 overflow-y-auto pr-2">
-            {document.fields.map(({ key, value }) => (
+            {document.fields.map(({ key, value, isImportant }) => (
               <div key={key} className="grid gap-2">
-                <Label htmlFor={key} className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={key} className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                   <Button variant="ghost" size="icon" onClick={() => handleToggleImportant(key, !isImportant)} className="h-8 w-8">
+                      <Star className={cn("h-4 w-4", isImportant ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground")} />
+                   </Button>
+                </div>
                 {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? (
                   <Input
                     id={key}
@@ -177,8 +199,7 @@ export default function DocumentPage() {
           )}
            {document.fields.length > 0 && (
             <div className="flex gap-2 pt-4">
-                <Button variant="outline"><Download className="mr-2 h-4 w-4"/> Download</Button>
-                <Button variant="outline"><Share2 className="mr-2 h-4 w-4"/> Share</Button>
+                <Button variant="outline"><Download className="mr-2 h-4 w-4"/> Download JSON</Button>
             </div>
            )}
         </CardContent>
