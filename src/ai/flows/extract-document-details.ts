@@ -18,7 +18,7 @@ const ExtractDocumentDetailsInputSchema = z.object({
   documentDataUri: z
     .string()
     .describe(
-      'A photo of a document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.' 
+      "A photo of a document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'." 
     ),
   documentType: z.string().describe('The type of document being uploaded (e.g., Aadhar Card, Pan Card).'),
   customInstructions: z
@@ -29,7 +29,7 @@ const ExtractDocumentDetailsInputSchema = z.object({
 export type ExtractDocumentDetailsInput = z.infer<typeof ExtractDocumentDetailsInputSchema>;
 
 const ExtractDocumentDetailsOutputSchema = z.object({
-  extractedDetails: z.record(z.any()).describe('The extracted details from the document in JSON format.'),
+  extractedDetails: z.record(z.string().or(z.number()).or(z.boolean()).or(z.null())),
 });
 export type ExtractDocumentDetailsOutput = z.infer<typeof ExtractDocumentDetailsOutputSchema>;
 
@@ -42,7 +42,7 @@ export async function extractDocumentDetails(
 const extractDocumentDetailsPrompt = ai.definePrompt({
   name: 'extractDocumentDetailsPrompt',
   input: {schema: ExtractDocumentDetailsInputSchema},
-  output: {schema: ExtractDocumentDetailsOutputSchema},
+  output: {format: 'json'},
   prompt: `You are an expert data extraction specialist.
 
 You will receive an image of a document and your task is to extract all important details from the document.
@@ -64,7 +64,10 @@ const extractDocumentDetailsFlow = ai.defineFlow(
     outputSchema: ExtractDocumentDetailsOutputSchema,
   },
   async input => {
-    const {output} = await extractDocumentDetailsPrompt(input);
-    return output!;
+    const response = await extractDocumentDetailsPrompt(input);
+    const jsonOutput = response.output as Record<string, any>;
+    return {
+      extractedDetails: jsonOutput
+    };
   }
 );
